@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+#we're just building/running tests for the client module
+  - docker build -t mcdh/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run mcdh/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t mcdh/multi-client ./client
+  - docker build -t mcdh/multi-server ./server
+  - docker build -t mcdh/multi-worker ./worker
+  - docker build -t mcdh/multi-nginx ./nginx
+  # login to docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push to docker hub
+  - docker push mcdh/multi-client
+  - docker push mcdh/multi-nginx
+  - docker push mcdh/multi-server
+  - docker push mcdh/multi-worker
+  
